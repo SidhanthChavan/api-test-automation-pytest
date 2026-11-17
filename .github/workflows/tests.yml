@@ -1,0 +1,37 @@
+name: API tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt ruff
+
+      - name: Check code style
+        run: ruff check .
+
+      - name: Run smoke tests first (fail fast)
+        run: pytest -m smoke
+
+      - name: Run the full suite and build the HTML report
+        run: pytest --html=report.html --self-contained-html
+
+      - name: Upload the HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-html-report
+          path: report.html
